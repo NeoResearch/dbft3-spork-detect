@@ -61,6 +61,9 @@ vector<int> make2f(vector<int> choices, int f, int i)
         if ((k != i) && (choices[k] != -2)) // not i and non-faulty
             options.push_back(k);
     std::random_shuffle(options.begin(), options.end());
+    // must add i as first on its list, if not proposer
+    if(i > 1) // non-primary {0,1}
+        options.insert(options.begin(), i);
     while (options.size() > 2 * f)
         options.pop_back();
     return options;
@@ -158,6 +161,15 @@ R_3 | 0 |       1(1)    1(2)    | Cancel 1
 possible commits: 2
     */
     // Note that R_3 must include itself on list, that's mandatory
+
+    // This was "probably" fixed. Now, what's this issue?
+/*
+R_0 | 0 |       1(1)    1(3)    | Cancel 1
+R_1 | 1 |       0(2)    1(3)    | Cancel 1
+R_2 | 0 |       0(2)    1(3)    | Cancel 0
+R_3 | 1 |       1(3)    0(2)    | Cancel 1
+possible commits: 2
+*/
 
     cout << "======== begin tests ========" << endl;
     srand(time(NULL));
