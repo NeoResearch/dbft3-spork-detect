@@ -147,6 +147,18 @@ int getCommitCountFromCancels(vector<int> cancels, int f)
 
 int main()
 {
+    // Solution to current problems:
+    // see paper version, and fix fact that responses must be included as mandatory
+    // this is not good:
+    /*
+R_0 | 0 |       0(3)    1(1)    | Cancel 0
+R_1 | 1 |       1(2)    0(3)    | Cancel 1
+R_2 | 1 |       0(0)    1(1)    | Cancel 1
+R_3 | 0 |       1(1)    1(2)    | Cancel 1
+possible commits: 2
+    */
+    // Note that R_3 must include itself on list, that's mandatory
+
     cout << "======== begin tests ========" << endl;
     srand(time(NULL));
     int f = 1; // N = 4
