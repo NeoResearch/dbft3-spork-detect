@@ -62,7 +62,7 @@ vector<int> make2f(vector<int> choices, int f, int i)
             options.push_back(k);
     std::random_shuffle(options.begin(), options.end());
     // must add i as first on its list, if not proposer
-    if(i > 1) // non-primary {0,1}
+    if (i > 1) // non-primary {0,1}
         options.insert(options.begin(), i);
     while (options.size() > 2 * f)
         options.pop_back();
@@ -108,7 +108,7 @@ vector<int> getCancels(vector<int> choices, vector<vector<pair<int, int>>> selec
         //cout << "cancel = " << cancel << endl;
         cancels[i] = cancel;
         // EXCEPTION: proposal j cannot Cancel more than j (otherwise it just assumes its "faultyness", what is absurd)
-        if(i==0)
+        if (i == 0)
             cancels[i] = 0; // FORCE. could do same for i=1 (but only two, so that's fine already)
     }
 
@@ -165,41 +165,64 @@ int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>
 
     // look for zero commits
     for (unsigned i = 0; i < cancels.size(); i++)
-        if (cancels[i] == 0)
+    {
+        if (cancels[i] != 0)
+            continue;
+
+        // found POSSIBLE X_0
+
+        // must verify primary edge case
+        if (i == 0) // may be tricky (mandatory for replica 0 to issue cancel 0)
         {
-            // found POSSIBLE X_0
-            if(i == 0) // may be tricky (mandatory for replica 0 to issue cancel 0)
+            // if primary 0 has another independent confirmation, then it's good
+            int confirmations = 0;
+            for (unsigned k = 0; k < selections[0].size(); k++)
+                if ((selections[0][k].second == 0)) //&& (selections[0][k].first != 0)) // a zero from someone else
+                    confirmations++;                // including itself
+            if (confirmations > 1)                  // more than itself
             {
-                //hasPossibleCommitZero = true; 
+                hasCommitZero = true;
+                break; // guaranteed
+            }
+            else
+            {
+                // only itself...
                 // one may received this "Cancel 0" with two other Cancel 1 (for 2f+1 = 3)
                 // must find in ALL other possible Cancel 1, if it could provide evidence that ONE NON-FAULTY zero exists.
                 // let's go.
-                bool guaranteedCommit = true;
-                for(unsigned j=1; j<cancels.size(); j++)
-                    //if(cancels[j] == 0) // OK, if you are lucky to receive this one... but perhaps not.
-                    if((cancels[j] ==0 ) || (cancels[j] == 1)) // any option must include extra f+1
+                int countConfirmed = 0; // must have at least 2f OTHERS including a VALID zero (a non-faulty zero)
+                for (unsigned j = 1; j < cancels.size(); j++)
+                {
+                    if (cancels[j] == 0) // OK, if you are lucky to receive this one...
+                        countConfirmed++;
+                    else
                     {
-                        bool foundIt = false;
-                        for(unsigned k=0; k<selections[j].size();k++)
-                            if((selections[j][k].second == 0) && (selections[j][k].first != 1))
-                            {
-                                foundIt = true;
-                                break;
-                            }
-                        if(!foundIt)
+                        // not so lucky this time...
+                        if (cancels[j] == 1) // any good option must include extra f+1
                         {
-                            // may not guarantee that it works out...
-                            guaranteedCommit = false;
-                            break;
+                            for (unsigned k = 0; k < selections[j].size(); k++)
+                                if ((selections[j][k].second == 0) && (selections[j][k].first != 0))
+                                {
+                                    countConfirmed++;
+                                    break;
+                                }
                         }
                     }
-                    if(guaranteedCommit)
-                        hasCommitZero = true;
+                } // for j=1 to N-1
+
+                // one needs this zero + 2f good ones (TODO: confirm for 7 nodes... maybe this is N-2... for 4 its same as 2f+1.. who knows)
+                if (countConfirmed >= 2 * f)
+                    hasCommitZero = true;
             }
-            else
-                hasCommitZero = true; // this one is certainly good
+        }                         // end replica 0 for cancel 0
+        else                      // this is trivial, not primary, thus certain value.
+            hasCommitZero = true; // this one is certainly good
+
+        // if found zero already, breaks search
+        if (hasCommitZero)
             break;
-        }
+    } // end looking for zeros
+
     // look for one commits
     int ones = 0;
     for (unsigned i = 0; i < cancels.size(); i++)
@@ -207,7 +230,6 @@ int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>
             ones++;
     if (ones >= 2 * f + 1) // found a possible X_1
         hasCommitOne = true;
-
 
     return hasCommitZero + hasCommitOne;
 }
@@ -227,7 +249,7 @@ possible commits: 2
     // Note that R_3 must include itself on list, that's mandatory
 
     // This was "probably" fixed. Now, what's this issue?
-/*
+    /*
 R_0 | 0 |       1(1)    1(3)    | Cancel 1  -> should be 0 (otherwise it just assumes its "faultyness")
 R_1 | 1 |       0(2)    1(3)    | Cancel 1
 R_2 | 0 |       0(2)    1(3)    | Cancel 0
@@ -235,15 +257,15 @@ R_3 | 1 |       1(3)    0(2)    | Cancel 1
 possible commits: 2
 */
     // As I imagined, this causes another problem (forcing 0 to issue Cancel 0). We must make sure there are f+1 (one non-faulty zero, to issue a commit 0)
-/*
+    /*
 R_0 | 0 |       1(2)    1(1)    | Cancel 0
 R_1 | 1 |       0(0)    1(3)    | Cancel 1
 R_2 | 1 |       1(2)    1(1)    | Cancel 1
 R_3 | 1 |       1(3)    1(2)    | Cancel 1
 possible commits: 2
 */
-// Looks like some error in logic
-/*
+    // Looks like some error in logic
+    /*
 R_0 | 0 |       1(3)    1(1)    | Cancel 0
 R_1 | 1 |       0(2)    0(0)    | Cancel 0
 R_2 | 0 |       0(2)    0(0)    | Cancel 0
@@ -268,7 +290,7 @@ SPORK! Multiple or Zero commits
 
         printv(choices);
 
-        int faulty = rand()%2;
+        int faulty = rand() % 2;
         vector<int> choicesi0 = make2f(choices, f, faulty); // responses for replica 0
 
         printv(choicesi0);
@@ -283,9 +305,10 @@ SPORK! Multiple or Zero commits
 
         int commits = getCommitCountFromCancels(cancels, sel, f);
         cout << "possible commits: " << commits << endl;
-        if(commits != 1)
+        if (commits != 1)
         {
-            cout << "SPORK!" << " Multiple or Zero commits" << endl;
+            cout << "SPORK!"
+                 << " Multiple or Zero commits" << endl;
             exit(1);
         }
     }
