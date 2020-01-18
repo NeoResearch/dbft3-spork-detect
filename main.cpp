@@ -235,6 +235,8 @@ int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>
 // p = N = 3f+1.   k = 2f+1
 int verifyCommitSubset(vector<int> cancels, vector<int> choices, vector<vector<pair<int, int>>> selections, int t[], int p, int k)
 {
+    int N = p;
+    int f = (N-1)/3;
     //vector<pair<int, int>> pack; // pack all information
     std::set<pair<int, int>> pack;
     int count_cancel_zero = 0;
@@ -294,10 +296,12 @@ int verifyCommitSubset(vector<int> cancels, vector<int> choices, vector<vector<p
     //if(count_zero >= 2) // f+1
     //    return 0;
     //if(count_zero >= k) // >=2f+1
-    if (count_zero >= 2) // >=f+1
-        return 0;
-    if (count_one >= k) // >=2f+1
+    if (count_one >= 2*f+1) // >=2f+1 // this is correct one
+    //if (count_one >= f+1) // >=f+1 // NOT GOOD!! JUST TESTING (INTENDS TO FAIL AND CREATE FORKS!!)
         return 1;
+    if (count_zero >= f+1) // >=f+1  // this is correct one
+        return 0;
+
     // THINK, WHAT ELSE?
     //return 0; // default zero (seems to cause problem, when all is 1, an intersection doesnt give 2f+1 ones...)
     // probably, voting.
@@ -323,7 +327,9 @@ R_3 | 1(1) |    1(3)    0(0)    | Cancel 1
     // default
     //return 0;
 
-    // cannot decide
+    // cannot decide (THIS IS THE SOLUTION!!!)
+    // sometimes, one should simply wait for more information... 
+    // ... and if really not possible, then Change View (rare cases, only 12.5% with permanent fault)
     return -3;
 
     /*
@@ -758,15 +764,20 @@ SPORK! Multiple or Zero commits
     //srand(time(NULL));
     srand(0);
 
-    //int NUM_TESTS = 1000000;
+    //int NUM_TESTS = 100000;
     int NUM_TESTS = 1000; // reduced to 1k (quick)
 
     int countHangsChangeView = 0;
     for (unsigned test = 0; test < NUM_TESTS; test++)
     {
+        // ONLY COMMAND TO CHANGE IS THE 'f' BELOW
         int f = 1; // N = 4
+        //int f = 2; // N = 7
         int N = 3*f+1;
-        int s[] = {0, 1, 2, 3}, t[N];
+        //int s[] = {0, 1, 2, 3, 4, 5, 6, 7}, t[N];
+        int s[N], t[N];
+        for(unsigned i=0; i<N; i++)
+            s[i] = i; // int s[] = {0, 1, 2, 3}
     
         cout << endl;
         cout << "TEST: " << test << endl;
