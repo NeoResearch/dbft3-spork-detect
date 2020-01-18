@@ -1,0 +1,19 @@
+========= SUMMARY =========
+REPLICAS N=10 f=3
+CHANGE VIEWS = 139 / 13.9%
+COMMIT0 = 674 / 67.4%
+COMMIT1 = 187 / 18.7%
+finished successfully
+========= SUMMARY =========
+REPLICAS N=7 f=2
+CHANGE VIEWS = 156 / 15.6%
+COMMIT0 = 661 / 66.1%
+COMMIT1 = 183 / 18.3%
+finished successfully
+========= SUMMARY =========
+REPLICAS N=4 f=1
+CHANGE VIEWS = 133 / 13.3%
+COMMIT0 = 618 / 61.8%
+COMMIT1 = 249 / 24.9%
+finished successfully
+
