@@ -159,7 +159,7 @@ vector<vector<pair<int, int>>> selections(vector<int> choices, int f)
                     //assert(respZero > -1); // THIS must be valid
                 }
             }
-            */
+            */ // DISABLED: this generates forks
 
         } // backups
     }
@@ -788,8 +788,8 @@ SPORK! Multiple or Zero commits
     // =====================================
     // ONLY THING TO CHANGE IS THE 'f' BELOW
     // =====================================
-    //int f = 1; // N = 4
-    int f = 2; // N = 7
+    int f = 1; // N = 4
+    //int f = 2; // N = 7
     //int f = 3; // N = 10
 
     // summary stuff
