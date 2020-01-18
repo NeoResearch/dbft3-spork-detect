@@ -107,6 +107,9 @@ vector<int> getCancels(vector<int> choices, vector<vector<pair<int, int>>> selec
         int cancel = responses[2 * f - 1];
         //cout << "cancel = " << cancel << endl;
         cancels[i] = cancel;
+        // EXCEPTION: proposal j cannot Cancel more than j (otherwise it just assumes its "faultyness", what is absurd)
+        if(i==0)
+            cancels[i] = 0; // FORCE. could do same for i=1 (but only two, so that's fine already)
     }
 
     return cancels;
@@ -164,10 +167,18 @@ possible commits: 2
 
     // This was "probably" fixed. Now, what's this issue?
 /*
-R_0 | 0 |       1(1)    1(3)    | Cancel 1
+R_0 | 0 |       1(1)    1(3)    | Cancel 1  -> should be 0 (otherwise it just assumes its "faultyness")
 R_1 | 1 |       0(2)    1(3)    | Cancel 1
 R_2 | 0 |       0(2)    1(3)    | Cancel 0
 R_3 | 1 |       1(3)    0(2)    | Cancel 1
+possible commits: 2
+*/
+    // As I imagined, this causes another problem (forcing 0 to issue Cancel 0). We must make sure there are f+1 (one non-faulty zero, to issue a commit 0)
+/*
+R_0 | 0 |       1(2)    1(1)    | Cancel 0
+R_1 | 1 |       0(0)    1(3)    | Cancel 1
+R_2 | 1 |       1(2)    1(1)    | Cancel 1
+R_3 | 1 |       1(3)    1(2)    | Cancel 1
 possible commits: 2
 */
 
