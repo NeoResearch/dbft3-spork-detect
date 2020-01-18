@@ -116,6 +116,9 @@ vector<vector<pair<int, int>>> selections(vector<int> choices, int f)
             for (unsigned k = 0; k < sel[i].size(); k++)
                 cout << sel[i][k].second << "(" << sel[i][k].first << ") ";
             cout << endl;
+
+            // disabling multiple response
+            /*
             if (choices[i] == 0) // assert that my prepare and response is going out
             {
                 //assert(prepZero>-1); // this is my choice, not in this vector (TODO: improve)
@@ -143,6 +146,8 @@ vector<vector<pair<int, int>>> selections(vector<int> choices, int f)
                     //assert(respZero > -1); // THIS must be valid
                 }
             }
+            */
+            
         } // backups
     }
 
@@ -234,11 +239,25 @@ int verifyCommitSubset(vector<int> cancels, vector<int> choices, vector<vector<p
 {
     //vector<pair<int, int>> pack; // pack all information
     std::set<pair<int, int>> pack;
+    int count_cancel_zero = 0;
+    int count_cancel_one = 0;
+    //bool includes_primaryZero = false;
     for(unsigned c=0; c<k; c++)
     {
         int e = t[c]; // get element from subset
         if(cancels[e] == -2)
             return -2; // dead node
+        if(cancels[e]==0)
+            count_cancel_zero++;
+        if(cancels[e]==1)
+            count_cancel_one++;
+            /*
+        if(e == 0)
+        {
+            includes_primaryZero = true;
+            return 0; // very strong primary 0
+        }
+        */
         pack.insert(make_pair(choices[e], choices[e])); // first proposal (responded to)
         for(unsigned j=0; j<selections[e].size(); j++)
             pack.insert(selections[e][j]); // responses (and possible more proposals)
@@ -282,10 +301,43 @@ int verifyCommitSubset(vector<int> cancels, vector<int> choices, vector<vector<p
     if(count_one >= k) // >=2f+1
         return 1;
     // THINK, WHAT ELSE?
-    return 0; // default zero
+    //return 0; // default zero (seems to cause problem, when all is 1, an intersection doesnt give 2f+1 ones...)
+    // probably, voting.
+
+    // VERY DUBIOUS CASE HERE... 0(0)    1(1)    1(3)
+    /*
+R_0 | 0(0) |    1(1)    1(3)    | Cancel 0
+R_1 | 1(1) |    0(0)    1(3)    | Cancel 1
+R_2 | 0(0) |    0(2)    1(1)    | Cancel 0
+R_3 | 1(1) |    1(3)    0(0)    | Cancel 1
+    */
+   // but it should be zero.
+
+   // try to vote by cancels.... desperate measure
+    //if(count_cancel_zero > 0)
+    //    return 0;
+    //else
+    //    return 1;
+    // didn't work out... 
+    // all ones and only first is zero. No one answered it. So, it must go one.
+    //if((count_one == 2) && (count_zero==1))
+    //    return 1;
+    // default
+    //return 0;
+
+    // cannot decide
+    return -3;
+
+    /*
+    // didn't work out... dubious case:  0(0)    1(1)    1(3)
+    if(count_one > count_zero)
+        return 1;
+    else
+        return 0; // equality, still zero
+        */
 }
 
-void getCommitSubsets(int& countZero, int& countOne, vector<int> cancels, vector<int> choices, vector<vector<pair<int, int>>> selections,  int s[],int p,int k,int t[], int q=0,int r=0)
+void getCommitSubsets(int& countZero, int& countOne, int& countHang, vector<int> cancels, vector<int> choices, vector<vector<pair<int, int>>> selections,  int s[],int p,int k,int t[], int q=0,int r=0)
 {
     // all subsets of size k, from p elements in total (N)
     if(q==k)
@@ -300,6 +352,8 @@ void getCommitSubsets(int& countZero, int& countOne, vector<int> cancels, vector
             countZero++;
         else if(commit == 1)
             countOne++;
+        else if(commit == -3)
+            countHang++; // cannot decide, must wait
         else if(commit == -2)
         {
             cout << "DEAD NODE IN SUBSET!" << endl;
@@ -316,7 +370,7 @@ void getCommitSubsets(int& countZero, int& countOne, vector<int> cancels, vector
         for(int i=r;i<p;i++)
         {
             t[q]=s[i];
-            getCommitSubsets(countZero, countOne, cancels, choices, selections, s,p,k,t,q+1,i+1);
+            getCommitSubsets(countZero, countOne, countHang, cancels, choices, selections, s,p,k,t,q+1,i+1);
         }
     }
 }
@@ -571,6 +625,135 @@ possible commits: 2
 SPORK! Multiple or Zero commits
 */
 
+// Working with subsets now... this case is also very strange
+/*
+*** i=3 | choice=1 | 1(3) 0(0) 
+R_0 | 0(0) |    1(1)    1(2)    | Cancel 0
+R_1 | 1(1) |    0(0)    1(2)    | Cancel 1
+R_2 | 1(1) |    1(2)    0(0)    | Cancel 1
+R_3 | 1(1) |    1(3)    0(0)    | Cancel 1
+verifying subset pack:
+0 1 2 
+PACK for p=N=4 2f+1=k=3
+0(0)    1(1)    1(2)             <------------- Too few information to decide... crazy!
+count_zero = 1
+count_one = 2
+RETURNED COMMIT = 0                   
+
+verifying subset pack:
+0 1 3 
+PACK for p=N=4 2f+1=k=3
+0(0)    1(1)    1(2)    1(3)
+count_zero = 1
+count_one = 3
+RETURNED COMMIT = 1
+
+verifying subset pack:
+0 2 3 
+PACK for p=N=4 2f+1=k=3
+0(0)    1(1)    1(2)    1(3)
+count_zero = 1
+count_one = 3
+RETURNED COMMIT = 1
+
+verifying subset pack:
+1 2 3 
+PACK for p=N=4 2f+1=k=3
+0(0)    1(1)    1(2)    1(3)
+count_zero = 1
+count_one = 3
+RETURNED COMMIT = 1
+
+countZero = 1
+countOne = 3
+possible commits: 2
+SPORK! Multiple or Zero commits
+*/
+
+// Perhaps the HARDEST one.
+// Voting may resolve the up one (that looks simpler...). But now this one, looks hard again.
+/*
+R_0 | 0(0) |    1(1)    1(3)    | Cancel 0
+R_1 | 1(1) |    0(0)    1(3)    | Cancel 1
+R_2 | 0(0) |    0(2)    1(1)    | Cancel 0
+R_3 | 1(1) |    1(3)    0(0)    | Cancel 1
+verifying subset pack:
+0 1 2 
+PACK for p=N=4 2f+1=k=3
+0(0)    1(1)    0(2)    1(3)
+count_zero = 2
+count_one = 2
+RETURNED COMMIT = 0
+
+verifying subset pack:
+0 1 3 
+PACK for p=N=4 2f+1=k=3
+0(0)    1(1)    1(3)
+count_zero = 1
+count_one = 2
+RETURNED COMMIT = 1
+
+verifying subset pack:
+0 2 3 
+PACK for p=N=4 2f+1=k=3
+0(0)    1(1)    0(2)    1(3)
+count_zero = 2
+count_one = 2
+RETURNED COMMIT = 0
+
+verifying subset pack:
+1 2 3 
+PACK for p=N=4 2f+1=k=3
+0(0)    1(1)    0(2)    1(3)
+count_zero = 2
+count_one = 2
+RETURNED COMMIT = 0
+
+countZero = 3
+countOne = 1
+possible commits: 2
+SPORK! Multiple or Zero commits
+*/
+
+// very BEAUTIFUL hang option, when no known choice is available
+/*
+R_0 | 0(0) |    1(1)    1(3)    | Cancel 0
+R_1 | 1(1) |    0(0)    1(3)    | Cancel 1
+R_2 | -2(-2) |  -2(-2)  -2(-2)  | Cancel -2
+R_3 | 1(1) |    1(3)    0(0)    | Cancel 1
+verifying subset pack:
+0 1 2 
+RETURNED COMMIT = -2
+
+DEAD NODE IN SUBSET!
+IGNORING...
+verifying subset pack:
+0 1 3 
+PACK for p=N=4 2f+1=k=3
+0(0)    1(1)    1(3)
+count_zero = 1
+count_one = 2
+RETURNED COMMIT = -3
+
+verifying subset pack:
+0 2 3 
+RETURNED COMMIT = -2
+
+DEAD NODE IN SUBSET!
+IGNORING...
+verifying subset pack:
+1 2 3 
+RETURNED COMMIT = -2
+
+DEAD NODE IN SUBSET!
+IGNORING...
+countZero = 0
+countOne = 0
+countHang = 1
+possible commits: 0
+SPORK! Multiple or Zero commits
+*/
+
     //main_subset();
     //exit(1);
     cout << "======== begin tests ========" << endl;
@@ -579,7 +762,7 @@ SPORK! Multiple or Zero commits
 
     int f = 1; // N = 4
 
-    for (unsigned test = 0; test < 100; test++)
+    for (unsigned test = 0; test < 1000; test++)
     {
         cout << endl;
         cout << "TEST: " << test << endl;
@@ -602,12 +785,14 @@ SPORK! Multiple or Zero commits
 
         int countZero = 0;
         int countOne = 0;
+        int countHang = 0;
         int s[]={0,1,2,3},t[4];
-        getCommitSubsets(countZero, countOne, cancels,choices,sel,s,4,3,t);
+        getCommitSubsets(countZero, countOne, countHang, cancels,choices,sel,s,4,3,t);
 
         //printv(cancels);
         cout << "countZero = " << countZero << endl;
         cout << "countOne = " << countOne << endl;
+        cout << "countHang = " << countHang << endl;
 
         int commits = (countZero > 0) + (countOne > 0);
         cout << "possible commits: " << commits << endl;
