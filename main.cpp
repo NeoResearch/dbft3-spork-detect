@@ -758,17 +758,20 @@ SPORK! Multiple or Zero commits
     //srand(time(NULL));
     srand(0);
 
-    int f = 1; // N = 4
     //int NUM_TESTS = 1000000;
     int NUM_TESTS = 1000; // reduced to 1k (quick)
 
     int countHangsChangeView = 0;
     for (unsigned test = 0; test < NUM_TESTS; test++)
     {
+        int f = 1; // N = 4
+        int N = 3*f+1;
+        int s[] = {0, 1, 2, 3}, t[N];
+    
         cout << endl;
         cout << "TEST: " << test << endl;
 
-        int faulty = rand() % 2;
+        int faulty = rand() % (f+1); // 0..f faulty nodes
 
         //vector<int> vec = makeTest(f, 0); // 0 buggy
         //vector<int> vec = makeTest(f, 1); // 1 buggy
@@ -787,8 +790,11 @@ SPORK! Multiple or Zero commits
         int countZero = 0;
         int countOne = 0;
         int countHang = 0;
-        int s[] = {0, 1, 2, 3}, t[4];
-        getCommitSubsets(countZero, countOne, countHang, cancels, choices, sel, s, 4, 3, t);
+        
+        
+
+
+        getCommitSubsets(countZero, countOne, countHang, cancels, choices, sel, s, 3*f+1, 2*f+1, t);
 
         //printv(cancels);
         cout << "countZero = " << countZero << endl;
