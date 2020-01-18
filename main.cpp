@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <vector>
 #include <random>
+#include <assert.h>
 
 using namespace std;
 
@@ -58,14 +59,22 @@ vector<int> make2f(vector<int> choices, int f, int i)
     int N = 3 * f + 1;
     vector<int> options;
     for (unsigned k = 0; k < N; k++)
-        if ((k != i) && (choices[k] != -2) && (k != choices[i])) // not i and non-faulty (last is to avoid repetition of response)
+        if ((k != i) && (choices[k] != -2) && (k != choices[i])) // not i and non-faulty
+                                                                 // (last is to avoid repetition of response): R_2 | 0(0) |    0(2)    0(0)    | Cancel 0
             options.push_back(k);
     std::random_shuffle(options.begin(), options.end());
     // must add i as first on its list, if not proposer
-    if (i > 1) // non-primary {0,1}
-        options.insert(options.begin(), i);
+    if (i > 1)                              // non-primary {0,1}
+        options.insert(options.begin(), i); // insert first prepare response (choice)
     while (options.size() > 2 * f)
         options.pop_back();
+    // must verify that, if responded to a second request, it's relaying first its response, than request itself (priority)
+    // example: I answer to Prop1 first, then I receive Prop0... If I decide to also respond to it, I may prefer the response, than the request (it's more info)
+    // perhaps a problem o logic in this method here... suppose I'm 2.. if I had choice 1, used 2 to respond to 1.. I cannot respond to 0 (2 was used already). Must do this outside this method.
+    // TODO: must improve this, change this method signature with more precise info (value/origin)
+    // This is the bug: R_3 | 1(1) |    1(3)    0(0)    | Cancel 1
+    // Should respond to zero first with my index, than just prepare request
+
     return options;
 }
 
@@ -81,6 +90,56 @@ vector<vector<pair<int, int>>> selections(vector<int> choices, int f)
         vector<int> choicesi = make2f(choices, f, i); // 2f responses for replica i
         for (unsigned j = 0; j < choicesi.size(); j++)
             sel[i][j] = make_pair(choicesi[j], choices[choicesi[j]]);
+        // may have bug here
+        // R_3 | 1(1) |    1(3)    0(0)    | Cancel 1
+        // we must prefer response over request, if double response being made
+        // I think this only applies to non-prepare nodes
+        if (i > 1) // only backups
+        {
+            int prepZero = -1;
+            int respZero = -1;
+            int prepOne = -1;
+            int respOne = -1;
+            for (unsigned k = 0; k < sel[i].size(); k++)
+            {
+                if ((sel[i][k].second == 0) && (sel[i][k].first == 0)) // prepareZero
+                    prepZero = k;
+                if ((sel[i][k].second == 1) && (sel[i][k].first == 1)) // prepareOne
+                    prepOne = k;
+                if ((sel[i][k].second == 0) && (sel[i][k].first == i)) // respZero
+                    respZero = k;
+                if ((sel[i][k].second == 1) && (sel[i][k].first == i)) // respOne
+                    respOne = k;
+            }
+            cout << "*** i=" << i << " | choice=" << choices[i] << " | ";
+            for (unsigned k = 0; k < sel[i].size(); k++)
+                cout << sel[i][k].second << "(" << sel[i][k].first << ") ";
+            cout << endl;
+            if (choices[i] == 0) // assert that my prepare and response is going out
+            {
+                //assert(prepZero>-1); // this is my choice, not in this vector (TODO: improve)
+                assert(respZero > -1);
+                // if re-proposing, must prioritize reply
+                if ((prepOne > -1) && (respOne == -1))
+                {
+                    // propose but no reply, let's change
+                    sel[i][prepOne].first = i; // now I'm responding, not sending proposal only
+                    //assert(respOne > -1); // THIS must be valid
+                }
+            }
+            if (choices[i] == 1) // assert that my prepare and response is going out
+            {
+                //assert(prepOne>-1); // this is my choice, not in this vector (TODO: improve)
+                assert(respOne > -1);
+                // if re-proposing, must prioritize reply
+                if ((prepZero > -1) && (respZero == -1))
+                {
+                    // propose but no reply, let's change
+                    sel[i][prepZero].first = i; // now I'm responding, not sending proposal only
+                    //assert(respZero > -1); // THIS must be valid
+                }
+            }
+        } // backups
     }
 
     return sel;
@@ -163,7 +222,7 @@ int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>
     bool hasCommitOne = false;
     bool hasCommitZero = false; // a little bit more complex
 
-    bool hasBadZero = false; // bad zero condition, may help commit one too... BadZero + 2 ones (N=4).. when 1 is faulty
+    bool hasBadZero = false;     // bad zero condition, may help commit one too... BadZero + 2 ones (N=4).. when 1 is faulty
     bool hasTrustedZero = false; // trusted zero should be the same as BadZero above...
 
     // look for zero commits
@@ -184,7 +243,7 @@ int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>
             for (unsigned k = 0; k < selections[0].size(); k++)
                 if ((selections[0][k].second == 0)) //&& (selections[0][k].first != 0)) // a zero from someone else
                     confirmations++;                // including itself
-            if (confirmations >= 1)                  // more than itself
+            if (confirmations >= 1)                 // more than itself
             {
                 hasCommitZero = true;
                 break; // guaranteed
@@ -238,11 +297,11 @@ int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>
             ones++;
     if (ones >= 2 * f + 1) // found a possible X_1
         hasCommitOne = true;
-    
+
     // special case: two one's and one BadZero (N=4) and a failed node...
     if (ones + hasBadZero == 2 * f + 1) // since ones are never in primary when BadZero is, this is good.
         hasCommitOne = true;
-    
+
     cout << "trustedzero: " << hasTrustedZero << endl;
     cout << "badzero: " << hasBadZero << endl;
     cout << "commit0: " << hasCommitZero << endl;
@@ -290,8 +349,8 @@ R_3 | 1 |       1(3)    1(1)    | Cancel 1
 possible commits: 0
 SPORK! Multiple or Zero commits
 */
-// ONE MORE....
-/*
+    // ONE MORE....
+    /*
 R_0 | 0 |       1(1)    1(3)    | Cancel 0
 R_1 | 1 |       1(3)    0(0)    | Cancel 1
 R_2 | -2 |      -2(-2)  -2(-2)  | Cancel -2
@@ -301,8 +360,8 @@ commit1: 0
 possible commits: 0
 SPORK! Multiple or Zero commits
 */
-// meeting the devil in person
-/*
+    // meeting the devil in person
+    /*
 R_0 | 0 |       1(1)    1(3)    | Cancel 0
 R_1 | 1 |       0(0)    1(3)    | Cancel 1
 R_2 | 0 |       0(2)    0(0)    | Cancel 0
@@ -314,10 +373,34 @@ commit1: 1
 possible commits: 2
 SPORK! Multiple or Zero commits
 */
-// MAYBE... reason is: only push 0, if all 2f+1 have proposal 0 on them, or a single non-faulty 0. 
-// This means all 2f+1 know about 0 at least, if cannot guarantee a non-faulty zero.
-// TODO: try this... but first, look for bug.
-// interpretation of 0(0) on other nodes, may be a re-response (thus enforcing its validity)
+    // MAYBE... reason is: only push 0, if all 2f+1 have proposal 0 on them, or a single non-faulty 0.
+    // This means all 2f+1 know about 0 at least, if cannot guarantee a non-faulty zero.
+    // TODO: try this... but first, look for bug.
+    // interpretation of 0(0) on other nodes, may be a re-response (thus enforcing its validity)
+/*
+R_0 | 0(0) |    1(1)    1(3)    | Cancel 0
+R_1 | 1(1) |    0(0)    1(3)    | Cancel 1
+R_2 | 0(0) |    0(2)    1(1)    | Cancel 0
+R_3 | 1(1) |    1(3)    0(0)    | Cancel 1    <----------- strange
+trustedzero: 1
+badzero: 1
+commit0: 1
+commit1: 1
+possible commits: 2
+*/
+// Now, the strangest one....
+/*
+R_0 | 0(0) |    1(1)    1(3)    | Cancel 0
+R_1 | 1(1) |    1(3)    1(2)    | Cancel 1
+R_2 | 1(1) |    1(2)    0(2)    | Cancel 1
+R_3 | 1(1) |    1(3)    0(3)    | Cancel 1
+trustedzero: 1
+badzero: 0
+commit0: 1
+commit1: 1
+possible commits: 2
+SPORK! Multiple or Zero commits
+*/
 
     cout << "======== begin tests ========" << endl;
     //srand(time(NULL));
