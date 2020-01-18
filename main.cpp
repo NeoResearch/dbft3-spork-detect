@@ -3,7 +3,7 @@
 #include <vector>
 #include <random>
 #include <assert.h>
-#include<set>
+#include <set>
 
 using namespace std;
 
@@ -147,7 +147,7 @@ vector<vector<pair<int, int>>> selections(vector<int> choices, int f)
                 }
             }
             */
-            
+
         } // backups
     }
 
@@ -164,7 +164,7 @@ vector<int> getCancels(vector<int> choices, vector<vector<pair<int, int>>> selec
     for (unsigned i = 0; i < N; i++)
     {
         if (choices[i] == -2)
-            continue; // faulty node
+            continue;       // faulty node
         int count_zero = 0; // try to Cancel 0 (NEW RULE)
         //vector<int> responses;
         //responses.push_back(choices[i]); // own choice counts
@@ -176,12 +176,12 @@ vector<int> getCancels(vector<int> choices, vector<vector<pair<int, int>>> selec
         //printv(responses);
         //int cancel = responses[2 * f - 1];
         for (unsigned j = 0; j < selections[i].size(); j++)
-            if(selections[i][j].second == 0)
+            if (selections[i][j].second == 0)
                 count_zero++;
-        if(choices[i] == 0)
+        if (choices[i] == 0)
             count_zero++;
-        int cancel = 1; // default one
-        if(count_zero >= f+1) // at least one trusted
+        int cancel = 1;          // default one
+        if (count_zero >= f + 1) // at least one trusted
             cancel = 0;
 
         ////cout << "cancel = " << cancel << endl;
@@ -232,8 +232,6 @@ int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>
 }
 */
 
-
-
 // p = N = 3f+1.   k = 2f+1
 int verifyCommitSubset(vector<int> cancels, vector<int> choices, vector<vector<pair<int, int>>> selections, int t[], int p, int k)
 {
@@ -242,16 +240,16 @@ int verifyCommitSubset(vector<int> cancels, vector<int> choices, vector<vector<p
     int count_cancel_zero = 0;
     int count_cancel_one = 0;
     //bool includes_primaryZero = false;
-    for(unsigned c=0; c<k; c++)
+    for (unsigned c = 0; c < k; c++)
     {
         int e = t[c]; // get element from subset
-        if(cancels[e] == -2)
+        if (cancels[e] == -2)
             return -2; // dead node
-        if(cancels[e]==0)
+        if (cancels[e] == 0)
             count_cancel_zero++;
-        if(cancels[e]==1)
+        if (cancels[e] == 1)
             count_cancel_one++;
-            /*
+        /*
         if(e == 0)
         {
             includes_primaryZero = true;
@@ -259,7 +257,7 @@ int verifyCommitSubset(vector<int> cancels, vector<int> choices, vector<vector<p
         }
         */
         pack.insert(make_pair(choices[e], choices[e])); // first proposal (responded to)
-        for(unsigned j=0; j<selections[e].size(); j++)
+        for (unsigned j = 0; j < selections[e].size(); j++)
             pack.insert(selections[e][j]); // responses (and possible more proposals)
     }
 
@@ -271,23 +269,23 @@ int verifyCommitSubset(vector<int> cancels, vector<int> choices, vector<vector<p
     });
     unique(pack.begin(), pack.end());
     */
-   //sort(pack.begin(), pack.end());
-   //pack.erase(unique(pack.begin(), pack.end()));
-   // remove repeated
+    //sort(pack.begin(), pack.end());
+    //pack.erase(unique(pack.begin(), pack.end()));
+    // remove repeated
     //for(unsigned i=0; i<int(pack.size())-1; i++)
     //    for(unsigned j=i+1; j<pack.size(); j++)
 
-    
     //for(int j=0; j<pack.size(); j++)
     //    cout << pack[j].second << "(" << pack[j].first << ")" << "\t";
     int count_zero = 0;
     int count_one = 0;
-    for(auto dp : pack)
+    for (auto dp : pack)
     {
-        cout << dp.second << "(" << dp.first << ")" << "\t";
-        if(dp.second == 0) 
+        cout << dp.second << "(" << dp.first << ")"
+             << "\t";
+        if (dp.second == 0)
             count_zero++;
-        if(dp.second == 1) 
+        if (dp.second == 1)
             count_one++;
     }
     cout << endl;
@@ -296,9 +294,9 @@ int verifyCommitSubset(vector<int> cancels, vector<int> choices, vector<vector<p
     //if(count_zero >= 2) // f+1
     //    return 0;
     //if(count_zero >= k) // >=2f+1
-    if(count_zero >= 2) // >=f+1
+    if (count_zero >= 2) // >=f+1
         return 0;
-    if(count_one >= k) // >=2f+1
+    if (count_one >= k) // >=2f+1
         return 1;
     // THINK, WHAT ELSE?
     //return 0; // default zero (seems to cause problem, when all is 1, an intersection doesnt give 2f+1 ones...)
@@ -311,14 +309,14 @@ R_1 | 1(1) |    0(0)    1(3)    | Cancel 1
 R_2 | 0(0) |    0(2)    1(1)    | Cancel 0
 R_3 | 1(1) |    1(3)    0(0)    | Cancel 1
     */
-   // but it should be zero.
+    // but it should be zero.
 
-   // try to vote by cancels.... desperate measure
+    // try to vote by cancels.... desperate measure
     //if(count_cancel_zero > 0)
     //    return 0;
     //else
     //    return 1;
-    // didn't work out... 
+    // didn't work out...
     // all ones and only first is zero. No one answered it. So, it must go one.
     //if((count_one == 2) && (count_zero==1))
     //    return 1;
@@ -337,24 +335,25 @@ R_3 | 1(1) |    1(3)    0(0)    | Cancel 1
         */
 }
 
-void getCommitSubsets(int& countZero, int& countOne, int& countHang, vector<int> cancels, vector<int> choices, vector<vector<pair<int, int>>> selections,  int s[],int p,int k,int t[], int q=0,int r=0)
+void getCommitSubsets(int &countZero, int &countOne, int &countHang, vector<int> cancels, vector<int> choices, vector<vector<pair<int, int>>> selections, int s[], int p, int k, int t[], int q = 0, int r = 0)
 {
     // all subsets of size k, from p elements in total (N)
-    if(q==k)
+    if (q == k)
     {
         cout << "verifying subset pack:" << endl;
-        for(int i=0;i<k;i++)
-            printf("%d ",t[i]);
+        for (int i = 0; i < k; i++)
+            printf("%d ", t[i]);
         printf("\n");
         int commit = verifyCommitSubset(cancels, choices, selections, t, p, k);
-        cout << "RETURNED COMMIT = " << commit << endl << endl;
-        if(commit == 0)
+        cout << "RETURNED COMMIT = " << commit << endl
+             << endl;
+        if (commit == 0)
             countZero++;
-        else if(commit == 1)
+        else if (commit == 1)
             countOne++;
-        else if(commit == -3)
+        else if (commit == -3)
             countHang++; // cannot decide, must wait
-        else if(commit == -2)
+        else if (commit == -2)
         {
             cout << "DEAD NODE IN SUBSET!" << endl;
             cout << "IGNORING..." << endl;
@@ -367,10 +366,10 @@ void getCommitSubsets(int& countZero, int& countOne, int& countHang, vector<int>
     }
     else
     {
-        for(int i=r;i<p;i++)
+        for (int i = r; i < p; i++)
         {
-            t[q]=s[i];
-            getCommitSubsets(countZero, countOne, countHang, cancels, choices, selections, s,p,k,t,q+1,i+1);
+            t[q] = s[i];
+            getCommitSubsets(countZero, countOne, countHang, cancels, choices, selections, s, p, k, t, q + 1, i + 1);
         }
     }
 }
@@ -494,8 +493,8 @@ void g(int s[],int p,int k,int t[],int q=0,int r=0)
 */
 // https://stackoverflow.com/questions/4555565/generate-all-subsets-of-size-k-from-a-set
 //void main_subset() {
-    //int s[]={1,2,3,4,5,6,7},t[7];
-    //g(s,7,5,t);
+//int s[]={1,2,3,4,5,6,7},t[7];
+//g(s,7,5,t);
 //}
 
 // MUST CLEARIFY THE LOGIC
@@ -503,7 +502,6 @@ void g(int s[],int p,int k,int t[],int q=0,int r=0)
 // if I receive 2f+1 valid0, then Cancel0 -> Commit0 (0 is surely the way to go)
 // if I receive 2f+1 valid1, then Cancel1. But not yet sure to commit1 directly... should wait for others (perhaps it's just me. Verify this logic!!)
 // if I receive 2f+1 Cancels, analyse content (aggregate). If 2f+1 zeros, it's zero.  If 2f+1 ones, it's one (check this, I hope so!). Otherwise, it's zero (check this!).
-  
 
 int main()
 {
@@ -572,7 +570,7 @@ SPORK! Multiple or Zero commits
     // This means all 2f+1 know about 0 at least, if cannot guarantee a non-faulty zero.
     // TODO: try this... but first, look for bug.
     // interpretation of 0(0) on other nodes, may be a re-response (thus enforcing its validity)
-/*
+    /*
 R_0 | 0(0) |    1(1)    1(3)    | Cancel 0
 R_1 | 1(1) |    0(0)    1(3)    | Cancel 1
 R_2 | 0(0) |    0(2)    1(1)    | Cancel 0
@@ -583,8 +581,8 @@ commit0: 1
 commit1: 1
 possible commits: 2
 */
-// Now, the strangest one....
-/*
+    // Now, the strangest one....
+    /*
 R_0 | 0(0) |    1(1)    1(3)    | Cancel 0
 R_1 | 1(1) |    1(3)    1(2)    | Cancel 1
 R_2 | 1(1) |    1(2)    0(2)    | Cancel 1
@@ -597,8 +595,8 @@ possible commits: 2
 SPORK! Multiple or Zero commits
 */
 
-// Still bug
-/*
+    // Still bug
+    /*
 R_0 | 0(0) |    1(3)    1(2)    | Cancel 0
 R_1 | 1(1) |    1(2)    0(0)    | Cancel 1   <------------- Strange
 R_2 | 1(1) |    1(2)    0(0)    0(2)    | Cancel 0
@@ -611,8 +609,8 @@ possible commits: 2
 SPORK! Multiple or Zero commits
 */
 
-// maybe try to simplify logic again (only cancels)
-/*
+    // maybe try to simplify logic again (only cancels)
+    /*
 R_0 | 0(0) |    1(1)    1(3)    | Cancel 0
 R_1 | 1(1) |    1(3)    0(0)    0(1)    | Cancel 0
 R_2 | 1(1) |    1(2)    1(3)    | Cancel 1
@@ -625,8 +623,8 @@ possible commits: 2
 SPORK! Multiple or Zero commits
 */
 
-// Working with subsets now... this case is also very strange
-/*
+    // Working with subsets now... this case is also very strange
+    /*
 *** i=3 | choice=1 | 1(3) 0(0) 
 R_0 | 0(0) |    1(1)    1(2)    | Cancel 0
 R_1 | 1(1) |    0(0)    1(2)    | Cancel 1
@@ -670,9 +668,9 @@ possible commits: 2
 SPORK! Multiple or Zero commits
 */
 
-// Perhaps the HARDEST one.
-// Voting may resolve the up one (that looks simpler...). But now this one, looks hard again.
-/*
+    // Perhaps the HARDEST one.
+    // Voting may resolve the up one (that looks simpler...). But now this one, looks hard again.
+    /*
 R_0 | 0(0) |    1(1)    1(3)    | Cancel 0
 R_1 | 1(1) |    0(0)    1(3)    | Cancel 1
 R_2 | 0(0) |    0(2)    1(1)    | Cancel 0
@@ -715,8 +713,8 @@ possible commits: 2
 SPORK! Multiple or Zero commits
 */
 
-// very BEAUTIFUL hang option, when no known choice is available
-/*
+    // very BEAUTIFUL hang option, when no known choice is available
+    /*
 R_0 | 0(0) |    1(1)    1(3)    | Cancel 0
 R_1 | 1(1) |    0(0)    1(3)    | Cancel 1
 R_2 | -2(-2) |  -2(-2)  -2(-2)  | Cancel -2
@@ -761,8 +759,11 @@ SPORK! Multiple or Zero commits
     srand(0);
 
     int f = 1; // N = 4
+    //int NUM_TESTS = 1000000;
+    int NUM_TESTS = 1000; // reduced to 1k (quick)
 
-    for (unsigned test = 0; test < 1000; test++)
+    int countHangsChangeView = 0;
+    for (unsigned test = 0; test < NUM_TESTS; test++)
     {
         cout << endl;
         cout << "TEST: " << test << endl;
@@ -786,8 +787,8 @@ SPORK! Multiple or Zero commits
         int countZero = 0;
         int countOne = 0;
         int countHang = 0;
-        int s[]={0,1,2,3},t[4];
-        getCommitSubsets(countZero, countOne, countHang, cancels,choices,sel,s,4,3,t);
+        int s[] = {0, 1, 2, 3}, t[4];
+        getCommitSubsets(countZero, countOne, countHang, cancels, choices, sel, s, 4, 3, t);
 
         //printv(cancels);
         cout << "countZero = " << countZero << endl;
@@ -796,13 +797,31 @@ SPORK! Multiple or Zero commits
 
         int commits = (countZero > 0) + (countOne > 0);
         cout << "possible commits: " << commits << endl;
-        if (commits != 1)
+        if (faulty == 0) // no faulty, must decide
         {
-            cout << "SPORK!"
-                 << " Multiple or Zero commits" << endl;
-            exit(1);
+            if (commits != 1)
+            {
+                cout << "SPORK!"
+                     << " Multiple or Zero commits" << endl;
+                exit(1);
+            }
         }
-        
+        else
+        {
+            // has faulty
+            if (commits > 1)
+            {
+                cout << "SPORK!"
+                     << " Multiple or Zero commits" << endl;
+                exit(1);
+            }
+            if (commits == 0)
+            {
+                countHangsChangeView++;
+                cout << "SYSTEM CHANGES VIEW!" << endl;
+            }
+        }
+
         /*
         int commits = getCommitCountFromCancels(cancels, sel, f);
         cout << "possible commits: " << commits << endl;
@@ -814,6 +833,8 @@ SPORK! Multiple or Zero commits
         }
         */
     }
+
+    cout << "CHANGE VIEWS = " << countHangsChangeView << " / " << 100*countHangsChangeView/double(NUM_TESTS) << "%" << endl;
 
     cout << "finished successfully" << endl;
     cout << endl;
