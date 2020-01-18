@@ -22,19 +22,32 @@ vector<int> makeTest(int f, int failed = 0)
 
     vector<int> choices(N, -1);
 
-    // double proposal
-    choices[0] = 0;
-    choices[1] = 1;
-    // set failed nodes
-    while (failed > 0)
+    int count_primaries = 0;
+    // must have at least one primary alive (non-faulty)
+    while (count_primaries == 0)
     {
-        int i = rand() % N; // failed
-        if (choices[i] != -2)
+        count_primaries = 2; // two primaries (must have at least one alive)
+        // double proposal
+        choices[0] = 0;
+        choices[1] = 1;
+        // set failed nodes
+        while (failed > 0)
         {
-            choices[i] = -2;
-            failed--;
+            int i = rand() % N; // failed
+            if (choices[i] != -2)
+            {
+                choices[i] = -2;
+                cout << " --> failed " << i << endl;
+                failed--;
+                if ((i == 0) || (i == 1))
+                {
+                    cout << "-----> lost primary!" << endl;
+                    count_primaries--;
+                }
+            }
         }
     }
+
     // set rest of nodes first responses
     for (unsigned i = 2; i < N; i++)
     {
@@ -236,7 +249,7 @@ int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>
 int verifyCommitSubset(vector<int> cancels, vector<int> choices, vector<vector<pair<int, int>>> selections, int t[], int p, int k)
 {
     int N = p;
-    int f = (N-1)/3;
+    int f = (N - 1) / 3;
     //vector<pair<int, int>> pack; // pack all information
     std::set<pair<int, int>> pack;
     int count_cancel_zero = 0;
@@ -296,10 +309,10 @@ int verifyCommitSubset(vector<int> cancels, vector<int> choices, vector<vector<p
     //if(count_zero >= 2) // f+1
     //    return 0;
     //if(count_zero >= k) // >=2f+1
-    if (count_one >= 2*f+1) // >=2f+1 // this is correct one
-    //if (count_one >= f+1) // >=f+1 // NOT GOOD!! JUST TESTING (INTENDS TO FAIL AND CREATE FORKS!!)
+    if (count_one >= 2 * f + 1) // >=2f+1 // this is correct one
+                                //if (count_one >= f+1) // >=f+1 // NOT GOOD!! JUST TESTING (INTENDS TO FAIL AND CREATE FORKS!!)
         return 1;
-    if (count_zero >= f+1) // >=f+1  // this is correct one
+    if (count_zero >= f + 1) // >=f+1  // this is correct one
         return 0;
 
     // THINK, WHAT ELSE?
@@ -328,7 +341,7 @@ R_3 | 1(1) |    1(3)    0(0)    | Cancel 1
     //return 0;
 
     // cannot decide (THIS IS THE SOLUTION!!!)
-    // sometimes, one should simply wait for more information... 
+    // sometimes, one should simply wait for more information...
     // ... and if really not possible, then Change View (rare cases, only 12.5% with permanent fault)
     return -3;
 
@@ -771,18 +784,18 @@ SPORK! Multiple or Zero commits
     for (unsigned test = 0; test < NUM_TESTS; test++)
     {
         // ONLY COMMAND TO CHANGE IS THE 'f' BELOW
-        int f = 1; // N = 4
+        int f = 2; // N = 4
         //int f = 2; // N = 7
-        int N = 3*f+1;
+        int N = 3 * f + 1;
         //int s[] = {0, 1, 2, 3, 4, 5, 6, 7}, t[N];
         int s[N], t[N];
-        for(unsigned i=0; i<N; i++)
+        for (unsigned i = 0; i < N; i++)
             s[i] = i; // int s[] = {0, 1, 2, 3}
-    
+
         cout << endl;
         cout << "TEST: " << test << endl;
 
-        int faulty = rand() % (f+1); // 0..f faulty nodes
+        int faulty = rand() % (f + 1); // 0..f faulty nodes
 
         //vector<int> vec = makeTest(f, 0); // 0 buggy
         //vector<int> vec = makeTest(f, 1); // 1 buggy
@@ -801,11 +814,8 @@ SPORK! Multiple or Zero commits
         int countZero = 0;
         int countOne = 0;
         int countHang = 0;
-        
-        
 
-
-        getCommitSubsets(countZero, countOne, countHang, cancels, choices, sel, s, 3*f+1, 2*f+1, t);
+        getCommitSubsets(countZero, countOne, countHang, cancels, choices, sel, s, 3 * f + 1, 2 * f + 1, t);
 
         //printv(cancels);
         cout << "countZero = " << countZero << endl;
@@ -851,7 +861,7 @@ SPORK! Multiple or Zero commits
         */
     }
 
-    cout << "CHANGE VIEWS = " << countHangsChangeView << " / " << 100*countHangsChangeView/double(NUM_TESTS) << "%" << endl;
+    cout << "CHANGE VIEWS = " << countHangsChangeView << " / " << 100 * countHangsChangeView / double(NUM_TESTS) << "%" << endl;
 
     cout << "finished successfully" << endl;
     cout << endl;
