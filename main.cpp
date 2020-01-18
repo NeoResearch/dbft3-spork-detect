@@ -94,7 +94,7 @@ vector<vector<pair<int, int>>> selections(vector<int> choices, int f)
         // R_3 | 1(1) |    1(3)    0(0)    | Cancel 1
         // we must prefer response over request, if double response being made
         // I think this only applies to non-prepare nodes
-        if (i > 1) // only backups
+        if (i > 0) // only backups (or primary 1) ... not primary zero
         {
             int prepZero = -1;
             int respZero = -1;
@@ -131,7 +131,8 @@ vector<vector<pair<int, int>>> selections(vector<int> choices, int f)
             if (choices[i] == 1) // assert that my prepare and response is going out
             {
                 //assert(prepOne>-1); // this is my choice, not in this vector (TODO: improve)
-                assert(respOne > -1);
+                if(i != 1) // 'one' does not respond to itself
+                    assert(respOne > -1);
                 // if re-proposing, must prioritize reply
                 if ((prepZero > -1) && (respZero == -1))
                 {
@@ -388,11 +389,26 @@ commit1: 1
 possible commits: 2
 SPORK! Multiple or Zero commits
 */
+
 // Still bug
 /*
 R_0 | 0(0) |    1(3)    1(2)    | Cancel 0
 R_1 | 1(1) |    1(2)    0(0)    | Cancel 1   <------------- Strange
 R_2 | 1(1) |    1(2)    0(0)    0(2)    | Cancel 0
+R_3 | 1(1) |    1(3)    1(2)    | Cancel 1
+trustedzero: 1
+badzero: 1
+commit0: 1
+commit1: 1
+possible commits: 2
+SPORK! Multiple or Zero commits
+*/
+
+// maybe try to simplify logic again (only cancels)
+/*
+R_0 | 0(0) |    1(1)    1(3)    | Cancel 0
+R_1 | 1(1) |    1(3)    0(0)    0(1)    | Cancel 0
+R_2 | 1(1) |    1(2)    1(3)    | Cancel 1
 R_3 | 1(1) |    1(3)    1(2)    | Cancel 1
 trustedzero: 1
 badzero: 1
