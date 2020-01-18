@@ -123,7 +123,8 @@ vector<vector<pair<int, int>>> selections(vector<int> choices, int f)
                 if ((prepOne > -1) && (respOne == -1))
                 {
                     // propose but no reply, let's change
-                    sel[i][prepOne].first = i; // now I'm responding, not sending proposal only
+                    //sel[i][prepOne].first = i; // now I'm responding, not sending proposal only
+                    sel[i].push_back(make_pair(i, 1)); // My response
                     //assert(respOne > -1); // THIS must be valid
                 }
             }
@@ -135,7 +136,8 @@ vector<vector<pair<int, int>>> selections(vector<int> choices, int f)
                 if ((prepZero > -1) && (respZero == -1))
                 {
                     // propose but no reply, let's change
-                    sel[i][prepZero].first = i; // now I'm responding, not sending proposal only
+                    //sel[i][prepZero].first = i; // now I'm responding, not sending proposal only
+                    sel[i].push_back(make_pair(i, 0)); // My response
                     //assert(respZero > -1); // THIS must be valid
                 }
             }
@@ -150,21 +152,32 @@ vector<int> getCancels(vector<int> choices, vector<vector<pair<int, int>>> selec
     int N = 3 * f + 1;
     vector<int> cancels(N, -2);
     // compute cancels for each replica
-    // rule is: order by lowest to highest proposal, and take value 2*f
+    // OLD // rule is: order by lowest to highest proposal, and take value 2*f
+    // NEW RULE (simpler): if Prep0 has a non-faulty proposal, Cancel 0, otherwise Cancel 1
     for (unsigned i = 0; i < N; i++)
     {
         if (choices[i] == -2)
             continue; // faulty node
-        vector<int> responses;
-        responses.push_back(choices[i]); // own choice counts
+        int count_zero = 0; // try to Cancel 0 (NEW RULE)
+        //vector<int> responses;
+        //responses.push_back(choices[i]); // own choice counts
+        //for (unsigned j = 0; j < selections[i].size(); j++)
+        //    responses.push_back(selections[i][j].second);
+        ////cout << "RESPONSES FOR I=" << i << endl;
+        ////printv(responses);
+        //sort(responses.begin(), responses.end());
+        //printv(responses);
+        //int cancel = responses[2 * f - 1];
         for (unsigned j = 0; j < selections[i].size(); j++)
-            responses.push_back(selections[i][j].second);
-        //cout << "RESPONSES FOR I=" << i << endl;
-        //printv(responses);
-        sort(responses.begin(), responses.end());
-        //printv(responses);
-        int cancel = responses[2 * f - 1];
-        //cout << "cancel = " << cancel << endl;
+            if(selections[i][j].second == 0)
+                count_zero++;
+        if(choices[i] == 0)
+            count_zero++;
+        int cancel = 1; // default one
+        if(count_zero >= f+1) // at least one trusted
+            cancel = 0;
+
+        ////cout << "cancel = " << cancel << endl;
         cancels[i] = cancel;
         // EXCEPTION: proposal j cannot Cancel more than j (otherwise it just assumes its "faultyness", what is absurd)
         if (i == 0)
@@ -186,32 +199,6 @@ void printTable(vector<int> choices, vector<vector<pair<int, int>>> selections, 
     }
 }
 
-// Now it's not just from cancels (counting), it needs to ensure there's at least one non-faulty.
-/*
-int getCommitCountFromCancels(vector<int> cancels, int f)
-{
-    // compute commit counts
-    // commit zero (X_0) may be issued when any zero is present
-    // commit one (X_1) may be issued when 2*f+1 ones is present
-    int commits = 0;
-    // look for zero commits
-    for (unsigned i = 0; i < cancels.size(); i++)
-        if (cancels[i] == 0)
-        {
-            commits++; // found X_0
-            break;
-        }
-    // look for one commits
-    int ones = 0;
-    for (unsigned i = 0; i < cancels.size(); i++)
-        if (cancels[i] == 1)
-            ones++;
-    if (ones >= 2 * f + 1) // found a possible X_1
-        commits++;
-
-    return commits;
-}
-*/
 // 'selections' is only used for dubious commit 0 case (on primary 0)
 int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>> selections, int f)
 {
@@ -396,6 +383,19 @@ R_2 | 1(1) |    1(2)    0(2)    | Cancel 1
 R_3 | 1(1) |    1(3)    0(3)    | Cancel 1
 trustedzero: 1
 badzero: 0
+commit0: 1
+commit1: 1
+possible commits: 2
+SPORK! Multiple or Zero commits
+*/
+// Still bug
+/*
+R_0 | 0(0) |    1(3)    1(2)    | Cancel 0
+R_1 | 1(1) |    1(2)    0(0)    | Cancel 1   <------------- Strange
+R_2 | 1(1) |    1(2)    0(0)    0(2)    | Cancel 0
+R_3 | 1(1) |    1(3)    1(2)    | Cancel 1
+trustedzero: 1
+badzero: 1
 commit0: 1
 commit1: 1
 possible commits: 2
