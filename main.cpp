@@ -127,6 +127,8 @@ void printTable(vector<int> choices, vector<vector<pair<int, int>>> selections, 
     }
 }
 
+// Now it's not just from cancels (counting), it needs to ensure there's at least one non-faulty.
+/*
 int getCommitCountFromCancels(vector<int> cancels, int f)
 {
     // compute commit counts
@@ -149,6 +151,65 @@ int getCommitCountFromCancels(vector<int> cancels, int f)
         commits++;
 
     return commits;
+}
+*/
+// 'selections' is only used for dubious commit 0 case (on primary 0)
+int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>> selections, int f)
+{
+    // compute commit counts
+    // commit zero (X_0) may be issued when any zero is present
+    // commit one (X_1) may be issued when 2*f+1 ones is present
+
+    bool hasCommitOne = false;
+    bool hasCommitZero = false; // a little bit more complex
+
+    // look for zero commits
+    for (unsigned i = 0; i < cancels.size(); i++)
+        if (cancels[i] == 0)
+        {
+            // found POSSIBLE X_0
+            if(i == 0) // may be tricky (mandatory for replica 0 to issue cancel 0)
+            {
+                //hasPossibleCommitZero = true; 
+                // one may received this "Cancel 0" with two other Cancel 1 (for 2f+1 = 3)
+                // must find in ALL other possible Cancel 1, if it could provide evidence that ONE NON-FAULTY zero exists.
+                // let's go.
+                bool guaranteedCommit = true;
+                for(unsigned j=1; j<cancels.size(); j++)
+                    //if(cancels[j] == 0) // OK, if you are lucky to receive this one... but perhaps not.
+                    if((cancels[j] ==0 ) || (cancels[j] == 1)) // any option must include extra f+1
+                    {
+                        bool foundIt = false;
+                        for(unsigned k=0; k<selections[j].size();k++)
+                            if((selections[j][k].second == 0) && (selections[j][k].first != 1))
+                            {
+                                foundIt = true;
+                                break;
+                            }
+                        if(!foundIt)
+                        {
+                            // may not guarantee that it works out...
+                            guaranteedCommit = false;
+                            break;
+                        }
+                    }
+                    if(guaranteedCommit)
+                        hasCommitZero = true;
+            }
+            else
+                hasCommitZero = true; // this one is certainly good
+            break;
+        }
+    // look for one commits
+    int ones = 0;
+    for (unsigned i = 0; i < cancels.size(); i++)
+        if (cancels[i] == 1)
+            ones++;
+    if (ones >= 2 * f + 1) // found a possible X_1
+        hasCommitOne = true;
+
+
+    return hasCommitZero + hasCommitOne;
 }
 
 int main()
@@ -181,9 +242,20 @@ R_2 | 1 |       1(2)    1(1)    | Cancel 1
 R_3 | 1 |       1(3)    1(2)    | Cancel 1
 possible commits: 2
 */
+// Looks like some error in logic
+/*
+R_0 | 0 |       1(3)    1(1)    | Cancel 0
+R_1 | 1 |       0(2)    0(0)    | Cancel 0
+R_2 | 0 |       0(2)    0(0)    | Cancel 0
+R_3 | 1 |       1(3)    1(1)    | Cancel 1
+possible commits: 0
+SPORK! Multiple or Zero commits
+*/
 
     cout << "======== begin tests ========" << endl;
-    srand(time(NULL));
+    //srand(time(NULL));
+    srand(0);
+
     int f = 1; // N = 4
 
     for (unsigned test = 0; test < 1000; test++)
@@ -209,7 +281,7 @@ possible commits: 2
 
         //printv(cancels);
 
-        int commits = getCommitCountFromCancels(cancels, f);
+        int commits = getCommitCountFromCancels(cancels, sel, f);
         cout << "possible commits: " << commits << endl;
         if(commits != 1)
         {
