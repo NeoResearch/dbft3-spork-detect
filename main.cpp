@@ -780,10 +780,17 @@ SPORK! Multiple or Zero commits
     //int NUM_TESTS = 100000;
     int NUM_TESTS = 1000; // reduced to 1k (quick)
 
-    // ONLY COMMAND TO CHANGE IS THE 'f' BELOW
+    // ===================||
+    //                    ||
+    //                    ||
+    //                   \\//
+    //
+    // =====================================
+    // ONLY THING TO CHANGE IS THE 'f' BELOW
+    // =====================================
     //int f = 1; // N = 4
-    //int f = 2; // N = 7
-    int f = 3; // N = 10
+    int f = 2; // N = 7
+    //int f = 3; // N = 10
 
     // summary stuff
     int countHangsChangeView = 0;
