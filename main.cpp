@@ -58,7 +58,7 @@ vector<int> make2f(vector<int> choices, int f, int i)
     int N = 3 * f + 1;
     vector<int> options;
     for (unsigned k = 0; k < N; k++)
-        if ((k != i) && (choices[k] != -2)) // not i and non-faulty
+        if ((k != i) && (choices[k] != -2) && (k != choices[i])) // not i and non-faulty (last is to avoid repetition of response)
             options.push_back(k);
     std::random_shuffle(options.begin(), options.end());
     // must add i as first on its list, if not proposer
@@ -120,7 +120,7 @@ void printTable(vector<int> choices, vector<vector<pair<int, int>>> selections, 
     int N = 3 * f + 1;
     for (unsigned i = 0; i < N; i++)
     {
-        cout << "R_" << i << " | " << choices[i] << " |\t";
+        cout << "R_" << i << " | " << choices[i] << "(" << choices[i] << ") |\t";
         for (unsigned j = 0; j < selections[i].size(); j++)
             cout << selections[i][j].second << "(" << selections[i][j].first << ")\t";
         cout << "| Cancel " << cancels[i] << endl;
@@ -314,6 +314,10 @@ commit1: 1
 possible commits: 2
 SPORK! Multiple or Zero commits
 */
+// MAYBE... reason is: only push 0, if all 2f+1 have proposal 0 on them, or a single non-faulty 0. 
+// This means all 2f+1 know about 0 at least, if cannot guarantee a non-faulty zero.
+// TODO: try this... but first, look for bug.
+// interpretation of 0(0) on other nodes, may be a re-response (thus enforcing its validity)
 
     cout << "======== begin tests ========" << endl;
     //srand(time(NULL));
