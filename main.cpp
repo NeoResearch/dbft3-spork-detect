@@ -231,6 +231,9 @@ int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>
     if (ones >= 2 * f + 1) // found a possible X_1
         hasCommitOne = true;
 
+    cout << "commit0: " << hasCommitZero << endl;
+    cout << "commit1: " << hasCommitOne << endl;
+
     return hasCommitZero + hasCommitOne;
 }
 
@@ -273,6 +276,17 @@ R_3 | 1 |       1(3)    1(1)    | Cancel 1
 possible commits: 0
 SPORK! Multiple or Zero commits
 */
+// ONE MORE....
+/*
+R_0 | 0 |       1(1)    1(3)    | Cancel 0
+R_1 | 1 |       1(3)    0(0)    | Cancel 1
+R_2 | -2 |      -2(-2)  -2(-2)  | Cancel -2
+R_3 | 1 |       1(3)    1(1)    | Cancel 1
+commit0: 0
+commit1: 0
+possible commits: 0
+SPORK! Multiple or Zero commits
+*/
 
     cout << "======== begin tests ========" << endl;
     //srand(time(NULL));
@@ -280,19 +294,19 @@ SPORK! Multiple or Zero commits
 
     int f = 1; // N = 4
 
-    for (unsigned test = 0; test < 1000; test++)
+    for (unsigned test = 0; test < 100; test++)
     {
         cout << endl;
         cout << "TEST: " << test << endl;
 
-        //vector<int> vec = makeTest(f, 1);
-        vector<int> choices = makeTest(f, 0);
+        int faulty = rand() % 2;
 
+        //vector<int> vec = makeTest(f, 0); // 0 buggy
+        //vector<int> vec = makeTest(f, 1); // 1 buggy
+        vector<int> choices = makeTest(f, faulty);
         printv(choices);
 
-        int faulty = rand() % 2;
-        vector<int> choicesi0 = make2f(choices, f, faulty); // responses for replica 0
-
+        vector<int> choicesi0 = make2f(choices, f, 0); // responses for replica 0
         printv(choicesi0);
 
         vector<vector<pair<int, int>>> sel = selections(choices, f);
