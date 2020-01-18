@@ -780,12 +780,17 @@ SPORK! Multiple or Zero commits
     //int NUM_TESTS = 100000;
     int NUM_TESTS = 1000; // reduced to 1k (quick)
 
+    // ONLY COMMAND TO CHANGE IS THE 'f' BELOW
+    //int f = 1; // N = 4
+    //int f = 2; // N = 7
+    int f = 3; // N = 10
+
+    // summary stuff
     int countHangsChangeView = 0;
+    int countCommit0 = 0;
+    int countCommit1 = 0;
     for (unsigned test = 0; test < NUM_TESTS; test++)
     {
-        // ONLY COMMAND TO CHANGE IS THE 'f' BELOW
-        int f = 2; // N = 4
-        //int f = 2; // N = 7
         int N = 3 * f + 1;
         //int s[] = {0, 1, 2, 3, 4, 5, 6, 7}, t[N];
         int s[N], t[N];
@@ -849,6 +854,9 @@ SPORK! Multiple or Zero commits
             }
         }
 
+        countCommit0 += (countZero > 0);
+        countCommit1 += (countOne > 0);
+
         /*
         int commits = getCommitCountFromCancels(cancels, sel, f);
         cout << "possible commits: " << commits << endl;
@@ -861,7 +869,11 @@ SPORK! Multiple or Zero commits
         */
     }
 
+    cout << " ========= SUMMARY =========" << endl;
+    cout << "REPLICAS N=" << 3 * f + 1 << " f=" << f << endl;
     cout << "CHANGE VIEWS = " << countHangsChangeView << " / " << 100 * countHangsChangeView / double(NUM_TESTS) << "%" << endl;
+    cout << "COMMIT0 = " << countCommit0 << " / " << 100 * countCommit0 / double(NUM_TESTS) << "%" << endl;
+    cout << "COMMIT1 = " << countCommit1 << " / " << 100 * countCommit1 / double(NUM_TESTS) << "%" << endl;
 
     cout << "finished successfully" << endl;
     cout << endl;
