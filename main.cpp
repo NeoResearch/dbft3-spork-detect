@@ -163,9 +163,13 @@ int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>
     bool hasCommitOne = false;
     bool hasCommitZero = false; // a little bit more complex
 
+    bool hasBadZero = false; // bad zero condition, may help commit one too... BadZero + 2 ones (N=4).. when 1 is faulty
+    bool hasTrustedZero = false; // trusted zero should be the same as BadZero above...
+
     // look for zero commits
     for (unsigned i = 0; i < cancels.size(); i++)
     {
+        // if not cancel zero, proceed...
         if (cancels[i] != 0)
             continue;
 
@@ -176,10 +180,11 @@ int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>
         {
             // if primary 0 has another independent confirmation, then it's good
             int confirmations = 0;
+            // selections contains only prepare responses (not request!)
             for (unsigned k = 0; k < selections[0].size(); k++)
                 if ((selections[0][k].second == 0)) //&& (selections[0][k].first != 0)) // a zero from someone else
                     confirmations++;                // including itself
-            if (confirmations > 1)                  // more than itself
+            if (confirmations >= 1)                  // more than itself
             {
                 hasCommitZero = true;
                 break; // guaranteed
@@ -187,6 +192,7 @@ int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>
             else
             {
                 // only itself...
+                hasTrustedZero = true;
                 // one may received this "Cancel 0" with two other Cancel 1 (for 2f+1 = 3)
                 // must find in ALL other possible Cancel 1, if it could provide evidence that ONE NON-FAULTY zero exists.
                 // let's go.
@@ -213,6 +219,8 @@ int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>
                 // one needs this zero + 2f good ones (TODO: confirm for 7 nodes... maybe this is N-2... for 4 its same as 2f+1.. who knows)
                 if (countConfirmed >= 2 * f)
                     hasCommitZero = true;
+                else
+                    hasBadZero = true; // bad zero may help commit one, perhaps!
             }
         }                         // end replica 0 for cancel 0
         else                      // this is trivial, not primary, thus certain value.
@@ -230,7 +238,13 @@ int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>
             ones++;
     if (ones >= 2 * f + 1) // found a possible X_1
         hasCommitOne = true;
-
+    
+    // special case: two one's and one BadZero (N=4) and a failed node...
+    if (ones + hasBadZero == 2 * f + 1) // since ones are never in primary when BadZero is, this is good.
+        hasCommitOne = true;
+    
+    cout << "trustedzero: " << hasTrustedZero << endl;
+    cout << "badzero: " << hasBadZero << endl;
     cout << "commit0: " << hasCommitZero << endl;
     cout << "commit1: " << hasCommitOne << endl;
 
@@ -285,6 +299,19 @@ R_3 | 1 |       1(3)    1(1)    | Cancel 1
 commit0: 0
 commit1: 0
 possible commits: 0
+SPORK! Multiple or Zero commits
+*/
+// meeting the devil in person
+/*
+R_0 | 0 |       1(1)    1(3)    | Cancel 0
+R_1 | 1 |       0(0)    1(3)    | Cancel 1
+R_2 | 0 |       0(2)    0(0)    | Cancel 0
+R_3 | 1 |       1(3)    0(0)    | Cancel 1
+trustedzero: 1
+badzero: 1
+commit0: 1
+commit1: 1
+possible commits: 2
 SPORK! Multiple or Zero commits
 */
 
