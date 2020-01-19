@@ -258,6 +258,38 @@ struct CommitStatus
     int msgCount;   // message count
 };
 
+vector<int> verifyFastCommits(vector<int> cancels, vector<int> choices, vector<vector<pair<int, int>>> selections)
+{
+    int N = choices.size();
+    int f = (N - 1) / 3;
+    vector<int> fast(N, -2);
+    for (unsigned i = 0; i < N; i++)
+    {
+        int sum_zeros = 0;
+        int sum_ones = 0;
+        if (choices[i] != -2) // exists
+        {
+            if (cancels[i] == 0)
+                sum_zeros++;
+            if (cancels[i] == 1)
+                sum_ones++;
+            for (unsigned k = 0; k < selections[i].size(); k++)
+            {
+                if (selections[i][k].second == 0)
+                    sum_zeros++;
+                if (selections[i][k].second == 1)
+                    sum_ones++;
+            }
+        }
+        // compute fast commits
+        if (sum_ones >= 2 * f + 1) // fast
+            fast[i] = 1;
+        if (sum_zeros >= f + 1) // fast
+            fast[i] = 0;
+    }
+    return fast;
+}
+
 // p = N = 3f+1.   k = 2f+1
 CommitStatus verifyCommitSubset(vector<int> cancels, vector<int> choices, vector<vector<pair<int, int>>> selections, int t[], int p, int k)
 {
@@ -797,7 +829,7 @@ SPORK! Multiple or Zero commits
     //srand(time(NULL));
     srand(0);
 
-    //int NUM_TESTS = 100000;
+    //int NUM_TESTS = 10000;
     //int NUM_TESTS = 1000000;
     int NUM_TESTS = 1000; // reduced to 1k (quick)
 
@@ -820,7 +852,9 @@ SPORK! Multiple or Zero commits
     int countGlobalUndecided = 0;
     int countCommit0 = 0;
     int countCommit1 = 0;
+
     int countSizeGlobal = 0;
+    int countFastCommits = 0;
     for (unsigned test = 0; test < NUM_TESTS; test++)
     {
         int N = 3 * f + 1;
@@ -911,13 +945,21 @@ SPORK! Multiple or Zero commits
                 vt[i] = valid[i];
             CommitStatus _com = verifyCommitSubset(cancels, choices, sel, vt, N, valid.size());
             cout << "GLOBAL: commit=" << _com.commit << " undecided=" << _com.undecided << endl;
-            if(_com.commit ==0)
+            if (_com.commit == 0)
                 countGlobalCommit0++;
-            if(_com.commit ==1)
+            if (_com.commit == 1)
                 countGlobalCommit1++;
-            if(_com.undecided)
+            if (_com.undecided)
                 countGlobalUndecided++;
             countSizeGlobal += valid.size();
+
+            vector<int> fast = verifyFastCommits(cancels, choices, sel);
+            for (unsigned k = 0; k < fast.size(); k++)
+                if (fast[k] != -2)
+                {
+                    assert(fast[k] == _com.commit);
+                    countFastCommits++;
+                }
         }
     }
 
@@ -929,8 +971,9 @@ SPORK! Multiple or Zero commits
     cout << " ========= GLOBAL =========" << endl;
     cout << "GL.UNDECIDED = " << countGlobalUndecided << " / " << 100 * countGlobalUndecided / double(NUM_TESTS) << "%" << endl;
     cout << "GL.SIZE = (avg) " << countSizeGlobal / double(NUM_TESTS) << endl;
+    cout << "COUNT.FAST = (avg) " << countFastCommits / double(NUM_TESTS) << endl;
     cout << "GL.COMMIT0 = " << countGlobalCommit0 << " / " << 100 * countGlobalCommit0 / double(NUM_TESTS) << "%" << endl;
-    cout << "GL.COMMIT1 = " << countGlobalCommit1 << " / " << 100 * countGlobalCommit1 / double(NUM_TESTS) << "%" << endl;    
+    cout << "GL.COMMIT1 = " << countGlobalCommit1 << " / " << 100 * countGlobalCommit1 / double(NUM_TESTS) << "%" << endl;
     cout << " ==================" << endl;
     cout << "finished successfully" << endl;
     cout << endl;

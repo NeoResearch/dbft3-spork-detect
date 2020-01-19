@@ -46,3 +46,34 @@ GL.COMMIT0 = 624790 / 62.479%
 GL.COMMIT1 = 249910 / 24.991%
  ==================
 finished successfully
+
+
+
+Fast Commits (average ~2.3 perhaps). Every one receiving that also commits automatically... very fast!
+ ========= SUMMARY =========
+REPLICAS N=4 f=1
+CHANGE VIEWS = 1280 / 12.8%
+COMMIT0 = 6191 / 61.91%
+COMMIT1 = 2529 / 25.29%
+ ========= GLOBAL =========
+GL.UNDECIDED = 1280 / 12.8%
+GL.SIZE = (avg) 3.5073
+COUNT.FAST = (avg) 2.2779
+GL.COMMIT0 = 6191 / 61.91%
+GL.COMMIT1 = 2529 / 25.29%
+ ==================
+finished successfully
+
+ ========= SUMMARY =========
+REPLICAS N=10 f=3
+CHANGE VIEWS = 139 / 13.9%
+COMMIT0 = 674 / 67.4%
+COMMIT1 = 187 / 18.7%
+ ========= GLOBAL =========
+GL.UNDECIDED = 139 / 13.9%
+GL.SIZE = (avg) 8.634
+COUNT.FAST = (avg) 5.26
+GL.COMMIT0 = 674 / 67.4%
+GL.COMMIT1 = 187 / 18.7%
+ ==================
+finished successfully
