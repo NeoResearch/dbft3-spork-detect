@@ -31,3 +31,18 @@ GL.UNDECIDED = 12612 / 12.612%
 GL.COMMIT0 = 62274 / 62.274%
 GL.COMMIT1 = 25114 / 25.114%
  ==================
+
+
+ 1 million executions
+  ========= SUMMARY =========
+REPLICAS N=4 f=1
+CHANGE VIEWS = 125300 / 12.53%
+COMMIT0 = 624790 / 62.479%
+COMMIT1 = 249910 / 24.991%
+ ========= GLOBAL =========
+GL.UNDECIDED = 125300 / 12.53%
+GL.SIZE = (avg) 3.49996
+GL.COMMIT0 = 624790 / 62.479%
+GL.COMMIT1 = 249910 / 24.991%
+ ==================
+finished successfully

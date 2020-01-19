@@ -798,7 +798,8 @@ SPORK! Multiple or Zero commits
     srand(0);
 
     //int NUM_TESTS = 100000;
-    int NUM_TESTS = 1000; // reduced to 1k (quick)
+    int NUM_TESTS = 1000000;
+    //int NUM_TESTS = 1000; // reduced to 1k (quick)
 
     // ===================||
     //                    ||
@@ -819,6 +820,7 @@ SPORK! Multiple or Zero commits
     int countGlobalUndecided = 0;
     int countCommit0 = 0;
     int countCommit1 = 0;
+    int countSizeGlobal = 0;
     for (unsigned test = 0; test < NUM_TESTS; test++)
     {
         int N = 3 * f + 1;
@@ -905,7 +907,7 @@ SPORK! Multiple or Zero commits
                 if (choices[i] != -2)
                     valid.push_back(i);
             int vt[valid.size()];
-            for (unsigned i = 0; i < N; i++)
+            for (unsigned i = 0; i < valid.size(); i++)
                 vt[i] = valid[i];
             CommitStatus _com = verifyCommitSubset(cancels, choices, sel, vt, N, valid.size());
             cout << "GLOBAL: commit=" << _com.commit << " undecided=" << _com.undecided << endl;
@@ -915,6 +917,7 @@ SPORK! Multiple or Zero commits
                 countGlobalCommit1++;
             if(_com.undecided)
                 countGlobalUndecided++;
+            countSizeGlobal += valid.size();
         }
     }
 
@@ -925,6 +928,7 @@ SPORK! Multiple or Zero commits
     cout << "COMMIT1 = " << countCommit1 << " / " << 100 * countCommit1 / double(NUM_TESTS) << "%" << endl;
     cout << " ========= GLOBAL =========" << endl;
     cout << "GL.UNDECIDED = " << countGlobalUndecided << " / " << 100 * countGlobalUndecided / double(NUM_TESTS) << "%" << endl;
+    cout << "GL.SIZE = (avg) " << countSizeGlobal / double(NUM_TESTS) << endl;
     cout << "GL.COMMIT0 = " << countGlobalCommit0 << " / " << 100 * countGlobalCommit0 / double(NUM_TESTS) << "%" << endl;
     cout << "GL.COMMIT1 = " << countGlobalCommit1 << " / " << 100 * countGlobalCommit1 / double(NUM_TESTS) << "%" << endl;    
     cout << " ==================" << endl;
