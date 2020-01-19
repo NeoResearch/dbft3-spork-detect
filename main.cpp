@@ -798,8 +798,8 @@ SPORK! Multiple or Zero commits
     srand(0);
 
     //int NUM_TESTS = 100000;
-    int NUM_TESTS = 1000000;
-    //int NUM_TESTS = 1000; // reduced to 1k (quick)
+    //int NUM_TESTS = 1000000;
+    int NUM_TESTS = 1000; // reduced to 1k (quick)
 
     // ===================||
     //                    ||
