@@ -159,7 +159,8 @@ vector<vector<pair<int, int>>> selections(vector<int> choices, int f)
                     //assert(respZero > -1); // THIS must be valid
                 }
             }
-            */ // DISABLED: this generates forks
+            */
+            // DISABLED: this generates forks
 
         } // backups
     }
@@ -245,8 +246,20 @@ int getCommitCountFromCancels(vector<int> cancels, vector<vector<pair<int, int>>
 }
 */
 
+struct CommitStatus
+{
+    CommitStatus(int _commit, bool _undecided = false, bool _dead = false, int _msgCount = -1) : commit(_commit), undecided(_undecided), dead(_dead), msgCount(_msgCount)
+    {
+    }
+
+    int commit;     // commit id
+    bool undecided; // not enough info
+    bool dead;      // dead node in subset
+    int msgCount;   // message count
+};
+
 // p = N = 3f+1.   k = 2f+1
-int verifyCommitSubset(vector<int> cancels, vector<int> choices, vector<vector<pair<int, int>>> selections, int t[], int p, int k)
+CommitStatus verifyCommitSubset(vector<int> cancels, vector<int> choices, vector<vector<pair<int, int>>> selections, int t[], int p, int k)
 {
     int N = p;
     int f = (N - 1) / 3;
@@ -259,7 +272,7 @@ int verifyCommitSubset(vector<int> cancels, vector<int> choices, vector<vector<p
     {
         int e = t[c]; // get element from subset
         if (cancels[e] == -2)
-            return -2; // dead node
+            return CommitStatus{-4, false, true}; // dead node
         if (cancels[e] == 0)
             count_cancel_zero++;
         if (cancels[e] == 1)
@@ -343,7 +356,7 @@ R_3 | 1(1) |    1(3)    0(0)    | Cancel 1
     // cannot decide (THIS IS THE SOLUTION!!!)
     // sometimes, one should simply wait for more information...
     // ... and if really not possible, then Change View (rare cases, only 12.5% with permanent fault)
-    return -3;
+    return CommitStatus{-4, true};
 
     /*
     // didn't work out... dubious case:  0(0)    1(1)    1(3)
@@ -363,7 +376,14 @@ void getCommitSubsets(int &countZero, int &countOne, int &countHang, vector<int>
         for (int i = 0; i < k; i++)
             printf("%d ", t[i]);
         printf("\n");
-        int commit = verifyCommitSubset(cancels, choices, selections, t, p, k);
+        CommitStatus _com = verifyCommitSubset(cancels, choices, selections, t, p, k);
+        int commit = -4;
+        if (_com.undecided)
+            commit = -3;
+        else if (_com.dead)
+            commit = -2;
+        else
+            commit = _com.commit;
         cout << "RETURNED COMMIT = " << commit << endl
              << endl;
         if (commit == 0)
@@ -794,6 +814,9 @@ SPORK! Multiple or Zero commits
 
     // summary stuff
     int countHangsChangeView = 0;
+    int countGlobalCommit0 = 0;
+    int countGlobalCommit1 = 0;
+    int countGlobalUndecided = 0;
     int countCommit0 = 0;
     int countCommit1 = 0;
     for (unsigned test = 0; test < NUM_TESTS; test++)
@@ -874,6 +897,25 @@ SPORK! Multiple or Zero commits
             exit(1);
         }
         */
+
+        // compute global
+        {
+            vector<int> valid;
+            for (unsigned i = 0; i < N; i++)
+                if (choices[i] != -2)
+                    valid.push_back(i);
+            int vt[valid.size()];
+            for (unsigned i = 0; i < N; i++)
+                vt[i] = valid[i];
+            CommitStatus _com = verifyCommitSubset(cancels, choices, sel, vt, N, valid.size());
+            cout << "GLOBAL: commit=" << _com.commit << " undecided=" << _com.undecided << endl;
+            if(_com.commit ==0)
+                countGlobalCommit0++;
+            if(_com.commit ==1)
+                countGlobalCommit1++;
+            if(_com.undecided)
+                countGlobalUndecided++;
+        }
     }
 
     cout << " ========= SUMMARY =========" << endl;
@@ -881,7 +923,11 @@ SPORK! Multiple or Zero commits
     cout << "CHANGE VIEWS = " << countHangsChangeView << " / " << 100 * countHangsChangeView / double(NUM_TESTS) << "%" << endl;
     cout << "COMMIT0 = " << countCommit0 << " / " << 100 * countCommit0 / double(NUM_TESTS) << "%" << endl;
     cout << "COMMIT1 = " << countCommit1 << " / " << 100 * countCommit1 / double(NUM_TESTS) << "%" << endl;
-
+    cout << " ========= GLOBAL =========" << endl;
+    cout << "GL.UNDECIDED = " << countGlobalUndecided << " / " << 100 * countGlobalUndecided / double(NUM_TESTS) << "%" << endl;
+    cout << "GL.COMMIT0 = " << countGlobalCommit0 << " / " << 100 * countGlobalCommit0 / double(NUM_TESTS) << "%" << endl;
+    cout << "GL.COMMIT1 = " << countGlobalCommit1 << " / " << 100 * countGlobalCommit1 / double(NUM_TESTS) << "%" << endl;    
+    cout << " ==================" << endl;
     cout << "finished successfully" << endl;
     cout << endl;
     return 0;

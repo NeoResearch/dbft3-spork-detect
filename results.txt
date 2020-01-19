@@ -17,3 +17,17 @@ COMMIT0 = 618 / 61.8%
 COMMIT1 = 249 / 24.9%
 finished successfully
 
+
+
+globally undecided
+
+ ========= SUMMARY =========
+REPLICAS N=4 f=1
+CHANGE VIEWS = 12612 / 12.612%
+COMMIT0 = 62274 / 62.274%
+COMMIT1 = 25114 / 25.114%
+ ========= GLOBAL =========
+GL.UNDECIDED = 12612 / 12.612%
+GL.COMMIT0 = 62274 / 62.274%
+GL.COMMIT1 = 25114 / 25.114%
+ ==================
